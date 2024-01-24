@@ -39,6 +39,7 @@ Route::post('logout', [DashboardController::class, 'logout'])->name('logout');
 Route::post('clients/datatables', [ClientController::class, 'datatables'])->name('clients.datatables');
 Route::resource('clients', ClientController::class);
 
+Route::get('orders/{code}/invoice', [OrderController::class, 'exports'])->name('orders.invoice');
 Route::post('orders/datatables', [OrderController::class, 'datatables'])->name('orders.datatables');
 Route::resource('orders', OrderController::class);
 

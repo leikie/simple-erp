@@ -13,13 +13,13 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        #generate 3 admin: buat melihat order masuk
+        #generate 3 super admin: buat kelola semua data
         $users = User::factory()
             ->count(3)
             ->create();
            
         foreach($users as $user) :
-            $user->assignRole('admin');
+            $user->assignRole('super admin');
         endforeach;
     }
 }

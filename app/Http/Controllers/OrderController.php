@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class OrderController extends Controller
 {
@@ -17,6 +18,7 @@ class OrderController extends Controller
         $this->middleware('permission:order-create', ['only' => ['create','store']]);
         $this->middleware('permission:order-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:order-delete', ['only' => ['destroy']]);
+        $this->middleware('permission:order-print', ['only' => ['export']]);
     }
 
     public function index()
@@ -28,8 +30,8 @@ class OrderController extends Controller
     {
         $users = User::latest()->get();
         $products = Product::latest()->get();
-
-        return view('endee.orders.create', compact('users', 'products'));
+        $mode = 'create';
+        return view('endee.orders.create', compact('users', 'products', 'mode'));
     }
 
     public function datatables(Request $request)
@@ -49,8 +51,7 @@ class OrderController extends Controller
                 <input class="form-check-input" type="checkbox" value="something">
             </div>';
 
-            #$url_print = route('orders.print', $value->id);
-            $url_detail = route('orders.show', $value->id);
+            $url_detail = route('orders.invoice', $value->id);
             $url_edit = route('orders.edit', $value->id);
 
             $actions = '<div class="dropdown">
@@ -62,7 +63,7 @@ class OrderController extends Controller
                 
                     <div class="dropdown-menu dashboard-dropdown dropdown-menu-start mt-2 py-1" 
                         data-popper-placement="bottom-end" style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate(-170px, 28px);">
-                        <a class="dropdown-item d-flex align-items-center" href="'.$url_detail.'">
+                        <a target="_blank" class="dropdown-item d-flex align-items-center" href="'.$url_detail.'">
                             <svg class="dropdown-icon text-gray-400 me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z"></path><path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd"></path></svg>
                             Detail
                         </a>
@@ -156,7 +157,8 @@ class OrderController extends Controller
 
         $users = User::latest()->get();
         $products = Product::latest()->get();
-        return view('endee.orders.edit', compact('users', 'products', 'order'));
+        $mode = 'edit';
+        return view('endee.orders.edit', compact('users', 'products', 'order', 'mode'));
     }
 
     public function update(Request $request, $id)
@@ -194,5 +196,35 @@ class OrderController extends Controller
         $order->delete();
         return redirect()->route('orders.index')
                         ->with('success', 'Order deleted successfully');
+    }
+
+    public function exports($order_id)
+    {
+        $order = Order::select('orders.*', 'users.name as user_name', 'users.address', 'products.product_name as product_name', 'products.price', 'products.merk', 'products.type', 'products.police_number')
+                ->leftJoin('users', 'users.id', '=', 'orders.user_id')
+                ->leftJoin('products', 'products.id', '=', 'orders.product_id')
+                ->where('orders.id', $order_id)
+                ->first();
+
+        if(empty($order)) :
+            return abort(404);
+        endif;
+
+        $data = [
+            'police_number' => $order->police_number,
+            'user_name' => $order->user_name,
+            'address' => $order->address,
+
+            'amount' => $order->price,
+            'product_name' => $order->product_name,
+            'merk' => $order->merk,
+            'loan_date' => date('d M Y', strtotime($order->loan_date)),
+            'return_date' => date('d M Y', strtotime($order->return_date)),
+
+            'quantity' => $order->qty,
+            'total_price' => number_format($order->total_price),
+        ];
+
+        return view('endee.orders.exports.pdf', $data);
     }
 }

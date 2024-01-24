@@ -31,7 +31,8 @@ class RegisterController extends Controller
         $new_user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password)
+            'password' => Hash::make($request->password),
+            'address' => '-'
         ]);
 
         $new_user->assignRole('visitor');

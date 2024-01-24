@@ -7,6 +7,9 @@
                 <div class="bg-white shadow border-0 rounded border-light p-4 p-lg-5 w-100 fmxw-500">
                     <div class="text-center text-md-center mb-4 mt-md-0">
                         <h1 class="mt-n3 mb-0 h3">{{ __('Create Account') }}</h1>
+                        @if ($message = Session::get('success'))
+                        <div class="alert alert-success fade show" role="alert">{{ $message }}</div>
+                        @endif
                     </div>
                     <form method="POST" action="{{ route('register') }}">
                         @csrf
