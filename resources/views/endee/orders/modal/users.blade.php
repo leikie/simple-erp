@@ -18,7 +18,7 @@
                                     <option selected="">Choose...</option>
                                     
                                     @foreach($users as $u)
-                                    <option {{ $order->user_id == $u->id ? 'selected' : '' }} value="{{ $u->id }}">{{ $u->name }} - {{ $u->email }}</option>
+                                    <option {{ $mode == 'edit' && $order->user_id == $u->id ? 'selected' : '' }} value="{{ $u->id }}">{{ $u->name }} - {{ $u->email }}</option>
                                     @endforeach
                                 </select>
                                 
