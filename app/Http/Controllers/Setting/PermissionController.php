@@ -9,11 +9,20 @@ use Spatie\Permission\Models\Role;
 
 class PermissionController extends Controller
 {
+    private $categories = [];
     public function __construct()
     {
         date_default_timezone_set("Asia/Jakarta");
+        $this->categories = [
+            'Role',
+            'Order',
+            'User',
+            'Menu',
+            'Product'
+        ];
+
         $this->middleware(['auth']);
-        $this->middleware('permission:menu-role', ['only' => ['index', 'show']]);
+        $this->middleware('permission:menu-role', ['only' => ['index', 'show', 'datatables']]);
         $this->middleware('permission:role-create', ['only' => ['create','store']]);
         $this->middleware('permission:role-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:role-delete', ['only' => ['destroy']]);
@@ -21,34 +30,13 @@ class PermissionController extends Controller
     
     public function index(Request $request)
     {
-        $filter = $request->query('filter');
-        $permissions = Permission::paginate(5);
-
-        if($filter) :
-            $permissions = Permission::where("name", "LIKE", "%{$filter}%")->paginate(5);
-        endif;
-
-        $categories = [
-            'Role',
-            'Order',
-            'User',
-            'Menu',
-            'Product'
-        ];
-
-        return view('endee.settings.permissions.index', compact('permissions', 'categories', 'filter'));
+        $categories = $this->categories;
+        return view('endee.settings.permissions.index', compact('categories'));
     }
 
     public function create()
     {
-        $categories = [
-            'Role',
-            'Order',
-            'User',
-            'Menu',
-            'Product'
-        ];
-
+        $categories = $this->categories;
         return view('endee.settings.permissions.create', compact('categories'));
     }
 
@@ -57,7 +45,7 @@ class PermissionController extends Controller
         $validated = $request->validate(['name' => 'required', 'prefix' => 'required']);
         
         Permission::create([
-            'name' => $request->prefix.'-'.$request->name
+            'name' => $request->prefix.'-'.strtolower($request->name)
         ]);
 
         return to_route('permissions.index')->with('success', 'Permission created.');
@@ -66,13 +54,7 @@ class PermissionController extends Controller
     public function edit(Permission $permission)
     {
         $roles = Role::all();
-        $categories = [
-            'Role',
-            'Order',
-            'User',
-            'Menu',
-            'Product'
-        ];
+        $categories = $this->categories;
 
         $prefix = explode('-', $permission->name);
         return view('endee.settings.permissions.edit', compact('permission', 'roles', 'categories', 'prefix'));
@@ -82,7 +64,7 @@ class PermissionController extends Controller
     {
         $validated = $request->validate(['name' => 'required']);
         $permission->update([
-            'name' => $request->prefix.'-'.$request->name
+            'name' => $request->prefix.'-'.strtolower($request->name)
         ]);
 
         return to_route('permissions.index')->with('success', 'Permission updated.');

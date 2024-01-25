@@ -6,7 +6,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
@@ -14,7 +14,7 @@ class OrderController extends Controller
     {
         date_default_timezone_set("Asia/Jakarta");
         $this->middleware(['auth']);
-        $this->middleware('permission:menu-order', ['only' => ['index', 'show']]);
+        $this->middleware('permission:menu-order', ['only' => ['index', 'show', 'datatables']]);
         $this->middleware('permission:order-create', ['only' => ['create','store']]);
         $this->middleware('permission:order-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:order-delete', ['only' => ['destroy']]);
@@ -30,15 +30,25 @@ class OrderController extends Controller
     {
         $users = User::latest()->get();
         $products = Product::latest()->get();
+        $current = Auth::user();
+        $role = $current->getRoleNames();
         $mode = 'create';
-        return view('endee.orders.create', compact('users', 'products', 'mode'));
+        return view('endee.orders.create', compact('users', 'products', 'mode', 'role', 'current'));
     }
 
     public function datatables(Request $request)
     {
+        $current = Auth::user();
+        $role = $current->getRoleNames(); 
+
         $q = Order::select('orders.*', 'users.name as user_name', 'products.product_name as product_name', 'products.price')
                 ->leftJoin('users', 'users.id', '=', 'orders.user_id')
                 ->leftJoin('products', 'products.id', '=', 'orders.product_id');
+
+        #kalo yg akses user biasa. dia hanya bisa melihat order miliknya sendiri
+        if($role[0] == 'visitor') :
+            $q->where('orders.user_id', $current->id);
+        endif;
 
         $items = $q->orderBy('orders.created_at', 'desc')
                 ->get();
@@ -120,20 +130,20 @@ class OrderController extends Controller
     {
         #submit order.
         $request->validate([
-            "user_id" => 'required',
-            "loan_date" => 'required',
-            "product_id" => 'required',
+            "user_id"       => 'required',
+            "loan_date"     => 'required',
+            "product_id"    => 'required',
         ]);
 
         $return_date = date('Y-m-d', strtotime("+".$request->qty." day", strtotime($request->loan_date)));
 
         $data = [
-            'user_id' => $request->post('user_id'),
-            'product_id' => $request->product_id,
-            'return_date' => $return_date,
-            'loan_date' => date('Y-m-d', strtotime($request->loan_date)),
-            'total_price' => $request->price * $request->qty,
-            'qty' => $request->qty,
+            'user_id'       => $request->post('user_id'),
+            'product_id'    => $request->product_id,
+            'return_date'   => $return_date,
+            'loan_date'     => date('Y-m-d', strtotime($request->loan_date)),
+            'total_price'   => $request->price * $request->qty,
+            'qty'           => $request->qty,
         ];
 
         $message = 'Order has been created successfully. ';
@@ -165,20 +175,20 @@ class OrderController extends Controller
     {
         #submit order.
         $request->validate([
-            "user_id" => 'required',
-            "loan_date" => 'required',
-            "product_id" => 'required',
+            "user_id"       => 'required',
+            "loan_date"     => 'required',
+            "product_id"    => 'required',
         ]);
 
         $return_date = date('Y-m-d', strtotime("+".$request->qty." day", strtotime($request->loan_date)));
 
         $data = [
-            'user_id' => $request->post('user_id'),
-            'product_id' => $request->product_id,
-            'return_date' => $return_date,
-            'loan_date' => date('Y-m-d', strtotime($request->loan_date)),
-            'total_price' => $request->price * $request->qty,
-            'qty' => $request->qty,
+            'user_id'       => $request->post('user_id'),
+            'product_id'    => $request->product_id,
+            'return_date'   => $return_date,
+            'loan_date'     => date('Y-m-d', strtotime($request->loan_date)),
+            'total_price'   => $request->price * $request->qty,
+            'qty'           => $request->qty,
         ];
 
         $order = Order::where('id', $id)->first();
@@ -211,18 +221,18 @@ class OrderController extends Controller
         endif;
 
         $data = [
-            'police_number' => $order->police_number,
-            'user_name' => $order->user_name,
-            'address' => $order->address,
+            'police_number'     => $order->police_number,
+            'user_name'         => $order->user_name,
+            'address'           => $order->address,
 
-            'amount' => $order->price,
-            'product_name' => $order->product_name,
-            'merk' => $order->merk,
-            'loan_date' => date('d M Y', strtotime($order->loan_date)),
-            'return_date' => date('d M Y', strtotime($order->return_date)),
+            'amount'            => $order->price,
+            'product_name'      => $order->product_name,
+            'merk'              => $order->merk,
+            'loan_date'         => date('d M Y', strtotime($order->loan_date)),
+            'return_date'       => date('d M Y', strtotime($order->return_date)),
 
-            'quantity' => $order->qty,
-            'total_price' => number_format($order->total_price),
+            'quantity'          => $order->qty,
+            'total_price'       => number_format($order->total_price),
         ];
 
         return view('endee.orders.exports.pdf', $data);

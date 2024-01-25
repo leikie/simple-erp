@@ -12,7 +12,7 @@ class ProductController extends Controller
     {
         date_default_timezone_set("Asia/Jakarta");
         $this->middleware(['auth']);
-        $this->middleware('permission:menu-product', ['only' => ['index', 'show']]);
+        $this->middleware('permission:menu-product', ['only' => ['index', 'show', 'datatables']]);
         $this->middleware('permission:product-create', ['only' => ['create','store']]);
         $this->middleware('permission:product-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:product-delete', ['only' => ['destroy']]);
@@ -131,24 +131,27 @@ class ProductController extends Controller
         return redirect()->route('products.index')->with('success', 'Product has been deleted successfully');
     }
 
+    #untuk proses ajax.
     public function details(Request $request)
     {
-        $id = $request->product;
-        $product = Product::where('id', $id)->first();
-        $data = '';
+        if($request->ajax()) :
+            $id = $request->product;
+            $product = Product::where('id', $id)->first();
+            $data = '';
 
-        if($product) :
-            $data = [
-                'police_number' => $product->police_number,
-                'merk' => $product->merk,
-                'type' => $product->type,
-                'price' => $product->price,
+            if($product) :
+                $data = [
+                    'police_number' => $product->police_number,
+                    'merk'          => $product->merk,
+                    'type'          => $product->type,
+                    'price'         => $product->price,
+                ];
+            endif;
+
+            return [
+                'status' => true,
+                'data'   => $data
             ];
         endif;
-
-        return [
-            'status' => true,
-            'data'   => $data
-        ];
     }
 }

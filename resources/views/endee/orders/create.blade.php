@@ -30,16 +30,18 @@
                             <div class="col-12">
                                 <div class="form-heading d-flex justify-content-between align-items-center">
                                     <h4 class="h5 mb-4">Users Details</h4>
+                                    @if($role[0] != 'visitor')
                                     <div>
                                         <a class="invoices-preview-link btn-find" href="#"><i class="fa fa-eye"></i> Cari User</a>
                                     </div>
+                                    @endif
                                 </div>
                             </div>
                             <div class="col-12 col-md-8 col-xl-8">  
                                 <div class="mb-3">
                                     <label>Nama User <span class="login-danger">*</span></label>
-                                    <input readonly id="name" value="{{ old('name') }}" class="@error('user_id') is-invalid @enderror form-control" name="name" type="text" >
-                                    <input class="form-control" name="user_id" value="{{ old('user_id') }}" id="user_id" type="hidden" >
+                                    <input readonly id="name" value="{{ $role[0] == 'visitor' ? $current->name : old('name') }}" class="@error('user_id') is-invalid @enderror form-control" name="name" type="text" >
+                                    <input class="form-control" name="user_id" value="{{ $role[0] == 'visitor' ? $current->id : old('user_id') }}" id="user_id" type="hidden" >
                                     @error('user_id')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
@@ -67,7 +69,7 @@
                             <div class="col-12 col-sm-12">
                                 <div class="mb-3">
                                     <label>Address <span class="login-danger">*</span></label>
-                                    <textarea readonly id="address" name="address" class="@error('address') is-invalid @enderror form-control" rows="3" cols="30">{{ old('address') }}</textarea>
+                                    <textarea readonly id="address" name="address" class="@error('address') is-invalid @enderror form-control" rows="3" cols="30">{{ $role[0] == 'visitor' ? $current->address : old('address') }}</textarea>
                                     @error('address')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>

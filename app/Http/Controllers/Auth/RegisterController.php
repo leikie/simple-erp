@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Controllers\Controller;
 
 class RegisterController extends Controller
 {
@@ -29,12 +29,13 @@ class RegisterController extends Controller
         ]);
 
         $new_user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'address' => '-'
+            'name'      => $request->name,
+            'email'     => $request->email,
+            'password'  => Hash::make($request->password),
+            'address'   => '-'
         ]);
 
+        #yg mendaftarkan di web otomatis rolenya sebagai visitor
         $new_user->assignRole('visitor');
         return redirect()->route('register')->with('success', 'User created successfully!');
     }

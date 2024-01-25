@@ -14,7 +14,7 @@ class RoleController extends Controller
     {
         date_default_timezone_set("Asia/Jakarta");
         $this->middleware(['auth']);
-        $this->middleware('permission:menu-role', ['only' => ['index', 'show']]);
+        $this->middleware('permission:menu-role', ['only' => ['index', 'show', 'datatables']]);
         $this->middleware('permission:role-create', ['only' => ['create','store']]);
         $this->middleware('permission:role-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:role-delete', ['only' => ['destroy']]);
@@ -40,7 +40,7 @@ class RoleController extends Controller
     public function store(Request $request)
     {
         $this->validate($request, [
-            'name' => 'required|unique:roles,name',
+            'name'       => 'required|unique:roles,name',
             'permission' => 'required',
         ]);
     

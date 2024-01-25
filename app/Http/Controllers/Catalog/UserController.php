@@ -16,7 +16,7 @@ class UserController extends Controller
     {
         date_default_timezone_set("Asia/Jakarta");
         $this->middleware(['auth']);
-        $this->middleware('permission:menu-user', ['only' => ['index']]);
+        $this->middleware('permission:menu-user', ['only' => ['index', 'datatables']]);
         $this->middleware('permission:user-create', ['only' => ['create','store']]);
         $this->middleware('permission:user-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:user-delete', ['only' => ['destroy']]);
@@ -26,8 +26,7 @@ class UserController extends Controller
     {
         $filter_user = User::role('visitor')->latest()->get();
         $roles = Role::pluck('name', 'name')->all();
-        return view('endee.catalog.users.index', compact('filter_user', 'roles'))
-            ->with('i', ($request->input('page', 1) - 1) * 5);
+        return view('endee.catalog.users.index', compact('filter_user', 'roles'));
     }
 
     public function create()
@@ -39,11 +38,11 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $data = [
-            'name' => 'required',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|same:confirm-password',
-            'roles' => 'required',
-            'address' => 'required',
+            'name'      => 'required',
+            'email'     => 'required|email|unique:users,email',
+            'password'  => 'required|same:confirm-password',
+            'roles'     => 'required',
+            'address'   => 'required',
         ];
 
         $input = $request->all();
@@ -52,6 +51,7 @@ class UserController extends Controller
         $input['password'] = Hash::make($input['password']);
 
         $user = User::create($input);
+        #buat user berdasarkan role yg dipilih
         $user->assignRole($request->input('roles'));
     
         return redirect()->route('users.index')
@@ -78,9 +78,9 @@ class UserController extends Controller
     public function update(Request $request, $id)
     {   
         $data = [
-            'password' => 'same:confirm-password',
-            'roles' => 'required',
-            'address' => 'required'
+            'password'  => 'same:confirm-password',
+            'roles'     => 'required',
+            'address'   => 'required'
         ];
 
         $input = $request->all();
@@ -115,6 +115,10 @@ class UserController extends Controller
         $role = $request->role;
 
         $q = User::select('*');
+        
+        if($role != 'All') :
+            $q->role($role);
+        endif;
 
         $items = $q->latest()->get();
 
@@ -187,21 +191,23 @@ class UserController extends Controller
 
     public function details(Request $request)
     {
-        $id = $request->user;
-        $user = User::where('id', $id)->first();
-        $data = '';
+        if($request->ajax()) :
+            $id = $request->user;
+            $user = User::where('id', $id)->first();
+            $data = '';
 
-        if($user) :
-            $data = [
-                'id' => $user->id,
-                'name' => $user->name,
-                'address' => $user->address
+            if($user) :
+                $data = [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'address' => $user->address
+                ];
+            endif;
+
+            return [
+                'status' => true,
+                'data'   => $data
             ];
         endif;
-
-        return [
-            'status' => true,
-            'data'   => $data
-        ];
     }
 }

@@ -42,11 +42,20 @@
 		
 			<div class="card card-table show-entire">
 				<div class="card-body p-3">
-					<div class="input-group mb-5">
-						<span class="input-group-text">
-							<svg class="icon icon-xs" x-description="Heroicon name: solid/search" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path></svg> 
-						</span>
-						<input type="text" id="my_search" class="form-control" placeholder="Search users">
+					<div class="d-flex justify-content-between align-items-center">
+						<div class="input-group mb-5 me-2 me-lg-3 fmxw-300">
+							<span class="input-group-text">
+								<svg class="icon icon-xs" x-description="Heroicon name: solid/search" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path></svg> 
+							</span>
+							<input type="text" id="my_search" class="form-control" placeholder="Search users">
+						</div>
+
+						<select class="form-select mb-5 fmxw-200 filter-role">
+							<option selected="selected" value="All">All</option>
+							@foreach ($roles as $role)
+							<option value="{{ strtolower($role) }}">{{ strtolower($role) }}</option>
+							@endforeach
+						</select>
 					</div>
 
 					@if ($message = Session::get('success'))
@@ -121,7 +130,7 @@
 
         let dataUsers
 
-        function datatables_users() {
+        function datatables_users(role) {
             dataUsers = $('#datatable-user').DataTable({
                 'destroy': true, 
 				"dom": "lrtip",
@@ -147,7 +156,7 @@
                 'ajax': {
                     "type": "POST", 
                     "url": "{{ route('users.datatables') }}",
-                    "data": {},
+                    "data": {role},
                     "headers": {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     }, 
@@ -186,7 +195,7 @@
             })
         }
 
-		datatables_users()
+		datatables_users('All')
 
 		$('#datatable-user').on('click', '.delete-user', function(e) {
 			e.preventDefault() // Don't post the form, unless confirmed
@@ -198,5 +207,16 @@
 		$('#my_search').keyup(function() {
       		dataUsers.search($(this).val()).draw()
 		})
+
+		$('.filter-role').on('change', function(e) {
+			let role = $(this).val()
+
+			if(role == 'All') {
+				datatables_users('All');
+			} else {
+				datatables_users(role);
+			}
+        
+    	})
 	</script>
 @endsection
